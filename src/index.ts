@@ -85,7 +85,7 @@ async function init() {
             }
         ]);
             
-        await pool.query('INSERT INTO employee (last_name, first_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', [newLastName, newFirstName, newRoleId, newEmployeeManager]);
+        await pool.query('INSERT INTO employee (last_name, first_name, role_id, manager_id) VALUES ($1, $2, (SELECT id FROM role WHERE title = $3), (SELECT id FROM employee WHERE id = $4))', [newLastName, newFirstName, newRoleId, newEmployeeManager]);
         console.log(`Employee ${newFirstName} ${newLastName} added.`);
         await init();
     }
@@ -116,13 +116,12 @@ async function getDepartmentNames() {
 }
 
 async function getRoleNames() {
-    const  {rows } = await pool.query('SELECT title FROM role');
+    const { rows } = await pool.query('SELECT title FROM role');
     return rows.map(row => row.title);
 }
 
 async function getNewEmployeeManagers() {
-    const { rows } = await pool.query('SELECT id, first_name, last_name FROM employee');
-    return rows.map(row => `${row.id} ${row.first_name} ${row.last_name}`);
+    const { rows } = await pool.query('SELECT first_name, last_name FROM employee'); 
+    return rows.map(row => `${row.first_name} ${row.last_name}`);
 }
-
 await init();
