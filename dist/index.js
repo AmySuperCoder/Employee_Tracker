@@ -31,6 +31,13 @@ async function init() {
         else if (response.userChoice == 'View all employees') {
             viewAllEmployees();
         }
+        else if (response.userChoice == 'Add a department') {
+            inquirer.prompt({
+                type: 'input',
+                name: 'newDepartment',
+                message: 'Enter department name'
+            });
+        }
     });
 }
 init();
