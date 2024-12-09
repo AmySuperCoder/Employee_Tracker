@@ -16,7 +16,9 @@ async function init() {
                 'Add a department', 
                 'Add a role', 
                 'Add an employee', 
-                'Update an employee role'
+                'Update an employee role',
+                'View employees by department',
+                'Exit'
             ]
         }
     ]);
@@ -109,10 +111,25 @@ async function init() {
             choices: await getNewRole()
             }
      ]);
-     await pool.query('UPDATE employee SET role_id = $2 WHERE id = $1', [empForNewRole, newEmpRole]);
+     await pool.query('UPDATE employee SET role_id = $1 WHERE id = $2', [newEmpRole, empForNewRole]);
      console.log(`${newEmpRole} assigned`);
      await init();
-    }
+    } else if (response.userChoice === 'View employees by department') {
+        const { departChoice } = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'departChoice',
+                message: "Choose the department",
+                choices: await getDepart()
+            }
+        ])
+    const {rows} = await pool.query('SELECT employee.first_name, employee.last_name, department.name FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON department.id = role.department_id WHERE department.id = $1', [departChoice]) 
+    console.table(rows);
+    await init();   
+    
+    } else  if (response.userChoice === 'Exit') {
+        process.exit(0)
+      }
          
 }
 
@@ -151,12 +168,17 @@ async function getNewEmployeeManagers() {
 }
 
 async function getEmployeeNames() {
-    const { rows } = await pool.query('SELECT id, first_name, last_name FROM employee');
-    return rows.map(row => `${row.id} ${row.first_name} ${row.last_name}`);
+    const { rows } = await pool.query('SELECT id AS value, CONCAT(first_name, last_name) AS name FROM employee');
+    return rows;
+}
+
+async function getDepart() {
+    const {rows} = await pool.query('SELECT id AS value, name FROM department');
+    return rows;
 }
 
 async function getNewRole() {
-    const { rows } = await pool.query('SELECT title FROM role');
-    return rows.map(row => row.title);   
+    const { rows } = await pool.query('SELECT id AS value, title AS name FROM role');
+    return rows;   
 }
 await init();
