@@ -16,6 +16,8 @@ async function init() {
                 'Add an employee',
                 'Update an employee role',
                 'View employees by department',
+                'Delete a department',
+                'Delete a role',
                 'Exit'
             ]
         }
@@ -121,10 +123,36 @@ async function init() {
                 name: 'departChoice',
                 message: "Choose the department",
                 choices: await getDepart()
-            }
+            },
         ]);
         const { rows } = await pool.query('SELECT employee.first_name, employee.last_name, department.name FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON department.id = role.department_id WHERE department.id = $1', [departChoice]);
         console.table(rows);
+        await init();
+    }
+    else if (response.userChoice === 'Delete a department') {
+        const { departChoice } = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'departChoice',
+                message: 'Choose the department to delete',
+                choices: await getDepart()
+            }
+        ]);
+        await pool.query('DELETE FROM department WHERE name = $1', [departChoice]);
+        console.log(`${departChoice} deleted`);
+        await init();
+    }
+    else if (response.userChoice === 'Delete a role') {
+        const { roleToDelete } = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'roleToDelete',
+                message: 'Choose the role to delete',
+                choices: await chooseRole()
+            }
+        ]);
+        await pool.query('DELETE FROM role WHERE title = $1', [roleToDelete]);
+        console.log(`${roleToDelete} deleted`);
         await init();
     }
     else if (response.userChoice === 'Exit') {
@@ -167,6 +195,10 @@ async function getDepart() {
     return rows;
 }
 async function getNewRole() {
+    const { rows } = await pool.query('SELECT id AS value, title AS name FROM role');
+    return rows;
+}
+async function chooseRole() {
     const { rows } = await pool.query('SELECT id AS value, title AS name FROM role');
     return rows;
 }
