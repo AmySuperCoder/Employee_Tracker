@@ -11,7 +11,7 @@ INSERT INTO role (title, salary, department_id) VALUES
 ('Lead Accountant', 120000, 1),
 ('Book keeper', 70000, 1),
 ('Database Administrator', 150000, 2),
-('Director', 200000, 2),
+('IT Director', 200000, 2),
 ('Lead Developer', 140000, 2),
 ('Developer', 90000, 2),
 ('Executive administrator', 65000, 3),

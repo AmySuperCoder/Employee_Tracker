@@ -1,6 +1,7 @@
 import { pool, connectToDb } from './connection.js';
 import inquirer from "inquirer";
 
+
 await connectToDb();
 
 async function init() {
@@ -20,6 +21,7 @@ async function init() {
                 'View employees by department',
                 'Delete a department',
                 'Delete a role',
+                'View department budget',
                 'Exit'
             ]
         }
@@ -154,8 +156,25 @@ async function init() {
     await pool.query('DELETE FROM role WHERE title = $1', [roleToDelete])
     console.log(`${roleToDelete} deleted`);
     await init();
+
+    } else if (response.userChoice === 'View department budget') {
+        const {departChoice} = await inquirer.prompt([
+            {
+            type: 'list',
+            name: 'departChoice',
+            message: 'Choose a department',
+            choices: await getDepart()
+            }
+        ])
+        const { rows } = await pool.query(
+            'SELECT SUM(role.salary) AS deptBudget FROM role JOIN department ON role.department_id = department.id WHERE department.id = $1',
+            [departChoice]
+        );
+        console.log(`The budget for ${departChoice} is $${rows[0].deptBudget || 0}`);
      
-    } else  if (response.userChoice === 'Exit') {
+    await init();
+         
+    } else if (response.userChoice === 'Exit') {
     process.exit(0)
   }
 
