@@ -92,9 +92,7 @@ async function init() {
             }
         ]);
         await pool.query(`INSERT INTO employee (last_name, first_name, role_id, manager_id)
-             VALUES ($1, $2, 
-                     (SELECT id FROM role WHERE title = $3),
-                     (SELECT id FROM employee WHERE first_name = $4 AND last_name = $5))`, [newLastName, newFirstName, newRoleId, newEmployeeManager.first_name, newEmployeeManager.last_name]);
+             VALUES ($1, $2, $3, $4)`, [newLastName, newFirstName, newRoleId, newEmployeeManager]);
         console.log(`Employee ${newFirstName} ${newLastName} added.`);
         await init();
     }
@@ -165,8 +163,8 @@ async function init() {
                 choices: await getDepart()
             }
         ]);
-        const { rows } = await pool.query('SELECT SUM(role.salary) AS deptBudget FROM role JOIN department ON role.department_id = department.id WHERE department.id = $1', [departChoice]);
-        console.log(`The budget for ${departChoice} is $${rows[0].deptBudget || 0}`);
+        const { rows } = await pool.query('SELECT SUM(role.salary) FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id WHERE department.id = $1', [departChoice]);
+        console.log(`The budget for ${departChoice} is $${rows[0].sum || 0}`);
         await init();
     }
     else if (response.userChoice === 'Exit') {
@@ -193,12 +191,14 @@ async function getDepartmentNames() {
     return rows.map(row => row.name);
 }
 async function getRoleNames() {
-    const { rows } = await pool.query('SELECT title FROM role');
-    return rows.map(row => row.title);
+    const { rows } = await pool.query('SELECT id as VALUE, title AS name FROM role');
+    return rows;
 }
 async function getNewEmployeeManagers() {
-    const { rows } = await pool.query('SELECT id, first_name, last_name FROM employee');
-    return rows.map(row => `${row.id} ${row.first_name} ${row.last_name}`);
+    const { rows } = await pool.query('SELECT id AS value, CONCAT(first_name, last_name) AS name FROM employee');
+    const managerChoice = rows;
+    managerChoice.push({ value: null, name: null });
+    return managerChoice;
 }
 async function getEmployeeNames() {
     const { rows } = await pool.query('SELECT id AS value, CONCAT(first_name, last_name) AS name FROM employee');
